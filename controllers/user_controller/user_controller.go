@@ -1,48 +1,52 @@
 package user_controller
 
-
+import "C"
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/Ramv4694/bookstore_users_api/domain/users"
 	"github.com/Ramv4694/bookstore_users_api/services"
+	"github.com/Ramv4694/bookstore_users_api/utils/errors"
 	"github.com/gin-gonic/gin"
-	"io/ioutil"
 	"net/http"
+	"strconv"
 )
 
 func CreateUser( c * gin.Context){
 	var user users.User
-
-	bytes,err := ioutil.ReadAll(c.Request.Body)
-	fmt.Println("The user is ", user.Id)
-	if err != nil{
-		//TODO: ERROR HANDLER
-
+	if  err := c.ShouldBindJSON(&user); err != nil{
+		//TODO HANDLE JSON ERROR
+		restErr := errors.NewBadRequest("Invalid Json Body")
+		c.JSON(restErr.Status,restErr)
 		return
 
-	}
-	if err := json.Unmarshal(bytes, &user); err != nil{
-
-		//TODO: HANDLE JSON ERROR
-		return
 
 	}
-
+	fmt.Println("user is ", user)
 	result,saveErr := services.CreateUser(user)
 	if saveErr != nil {
 		//Handle USER creation eror
-		return
+		c.JSON(saveErr.Status,saveErr)
+   		return
 	}
-	fmt.Println(string(bytes))
 	c.JSON(http.StatusCreated,result)
 
 }
 
 
 func GetUser(c * gin.Context){
-
+	userId,userErr := strconv.ParseInt(c.Param("user_id"),10,64)
+    if userErr != nil{
+    	err := errors.NewBadRequest("invalid user id")
+		C.JSON(err.Status,err)
+	}
 	c.String(http.StatusNotImplemented,"mplemt mnee")
+	result,getErr := services.GetUser(userId)
+	if getErr != nil {
+		//Handle USER creation eror
+		c.JSON(getErr.Status,getErr)
+		return
+	}
+	c.JSON(http.StatusCreated,result)
 
 }
 /*
